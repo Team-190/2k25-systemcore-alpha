@@ -35,7 +35,7 @@ public class FunnelConstants {
       default:
         CLAP_DADDY_MOTOR_ID = 41;
         ROLLER_MOTOR_ID = 40;
-        CORAL_SENSOR_ID = 0;
+        CORAL_SENSOR_ID = 1;
         CLAP_DADDY_CANCODER_ID = 40;
         CLAP_DADDY_MOTOR_GEAR_RATIO = 34.0;
         ROLLER_MOTOR_GEAR_RATIO = 5.33333333;

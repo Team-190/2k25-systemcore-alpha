@@ -55,8 +55,8 @@ public class ClimberIOTalonFX implements ClimberIO {
     temperatureCelsius = talonFX.getDeviceTemp();
 
     // Initialize sensor inputs
-    redundantSwitchOne = new DigitalInput(1);
-    redundantSwitchTwo = new DigitalInput(2);
+    redundantSwitchOne = new DigitalInput(2);
+    redundantSwitchTwo = new DigitalInput(3);
 
     BaseStatusSignal.setUpdateFrequencyForAll(
         50,
