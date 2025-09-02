@@ -1,3 +1,10 @@
+// Copyright (c) 2025 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.robot.subsystems.v2_Redundancy.leds;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,7 +30,7 @@ public class V2_RedundancyLEDs extends Leds {
   private boolean estopped = false;
 
   private static final int LENGTH = 68;
-  private static final int PORT = 0;
+  private static final int PORT = 1;
   private static final int LEFT_LENGTH_START = 0;
   private static final int LEFT_LENGTH_END = 33;
   private static final int RIGHT_LENGTH_START = 34;

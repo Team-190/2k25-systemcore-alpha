@@ -1,4 +1,4 @@
-// Copyright (c) 2024 FRC 6328
+// Copyright (c) 2025 FRC 6328
 // http://github.com/Mechanical-Advantage
 //
 // Use of this source code is governed by an MIT-style
@@ -66,8 +66,8 @@ public abstract class Leds extends VirtualSubsystem {
     leds = new AddressableLED(PORT);
     buffer = new AddressableLEDBuffer(LENGTH);
     leds.setLength(LENGTH);
+    leds.setStart(0);
     leds.setData(buffer);
-    leds.start();
     loadingNotifier =
         new Notifier(
             () -> {

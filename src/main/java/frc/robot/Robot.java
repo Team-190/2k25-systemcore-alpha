@@ -1,3 +1,10 @@
+// Copyright (c) 2025 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -134,7 +141,6 @@ public class Robot extends LoggedRobot {
     disabledTimer.reset();
     disabledTimer.start();
 
-    RobotController.setBrownoutVoltage(6);
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our autonomous chooser on the dashboard.
     robotContainer =

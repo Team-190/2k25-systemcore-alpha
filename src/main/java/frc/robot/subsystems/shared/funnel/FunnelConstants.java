@@ -1,3 +1,10 @@
+// Copyright (c) 2025 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.robot.subsystems.shared.funnel;
 
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -35,12 +42,12 @@ public class FunnelConstants {
       default:
         CLAP_DADDY_MOTOR_ID = 41;
         ROLLER_MOTOR_ID = 40;
-        CORAL_SENSOR_ID = 1;
+        CORAL_SENSOR_ID = 0;
         CLAP_DADDY_CANCODER_ID = 40;
         CLAP_DADDY_MOTOR_GEAR_RATIO = 34.0;
         ROLLER_MOTOR_GEAR_RATIO = 5.33333333;
         CLAP_DADDY_CANCODER_GEAR_RATIO = 1.5;
-        CANCODER_ABSOLUTE_OFFSET_RADIANS = Rotation2d.fromRadians(-4.651029748869264);
+        CANCODER_ABSOLUTE_OFFSET_RADIANS = Rotation2d.fromDegrees(90);
         CLAP_DADDY_INVERTED = InvertedValue.CounterClockwise_Positive;
         ROLLER_INVERTED = InvertedValue.Clockwise_Positive;
 

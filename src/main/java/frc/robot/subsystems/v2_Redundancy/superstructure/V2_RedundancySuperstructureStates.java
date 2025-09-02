@@ -1,3 +1,10 @@
+// Copyright (c) 2025 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.robot.subsystems.v2_Redundancy.superstructure;
 
 import frc.robot.FieldConstants.Reef.ReefState;
@@ -268,8 +275,10 @@ public enum V2_RedundancySuperstructureStates {
 
   /** Human-readable name of the state */
   private final String name;
+
   /** Target positions for all subsystems in this state */
   private final SubsystemPoses subsystemPoses;
+
   /** Action commands (like roller speeds) for this state */
   private final SubsystemActions subsystemActions;
 

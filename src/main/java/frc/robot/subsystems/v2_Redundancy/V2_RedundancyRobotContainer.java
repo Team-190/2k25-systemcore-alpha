@@ -1,3 +1,10 @@
+// Copyright (c) 2025 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.robot.subsystems.v2_Redundancy;
 
 import edu.wpi.first.networktables.NetworkTablesJNI;
@@ -138,9 +145,6 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
     if (intake == null) {
       intake = new V2_RedundancyIntake(new V2_RedundancyIntakeIO() {});
     }
-    if (leds == null) {
-      leds = new V2_RedundancyLEDs();
-    }
     if (manipulator == null) {
       manipulator = new V2_RedundancyManipulator(new V2_RedundancyManipulatorIO() {});
     }
@@ -231,7 +235,9 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
 
     // Driver POV
     driver.povUp().onTrue(superstructure.setPosition());
-    driver.povDown().onTrue(SharedCommands.resetHeading(drive));
+    driver
+        .start()
+        .onTrue(Commands.print("button pressed").andThen(SharedCommands.resetHeading(drive)));
     driver.povLeft().onTrue(DriveCommands.inchMovement(drive, -0.5, .07));
 
     driver
@@ -249,17 +255,17 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
                 () -> RobotState.getReefAlignData().algaeIntakeHeight(),
                 RobotCameras.V2_REDUNDANCY_CAMS));
 
-    driver
-        .start()
-        .whileTrue(
-            V2_RedundancyCompositeCommands.dropAlgae(
-                drive,
-                elevator,
-                manipulator,
-                intake,
-                superstructure,
-                () -> RobotState.getReefAlignData().algaeIntakeHeight(),
-                RobotCameras.V2_REDUNDANCY_CAMS));
+    // driver
+    //     .start()
+    //     .whileTrue(
+    //         V2_RedundancyCompositeCommands.dropAlgae(
+    //             drive,
+    //             elevator,
+    //             manipulator,
+    //             intake,
+    //             superstructure,
+    //             () -> RobotState.getReefAlignData().algaeIntakeHeight(),
+    //             RobotCameras.V2_REDUNDANCY_CAMS));
 
     // Operator face buttons
     operator.y().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L4));
