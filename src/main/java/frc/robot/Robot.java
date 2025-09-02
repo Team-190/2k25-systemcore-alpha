@@ -8,6 +8,8 @@
 package frc.robot;
 
 import com.ctre.phoenix6.SignalLogger;
+import edu.wpi.first.math.MathShared;
+import edu.wpi.first.math.MathSharedStore;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.RobotController;
@@ -180,6 +182,30 @@ public class Robot extends LoggedRobot {
         .onCommandInterrupt((Command command) -> logCommandFunction.accept(command, false));
 
     startupTimestamp = Timer.getFPGATimestamp();
+    DriverStation.silenceJoystickConnectionWarning(true);
+
+    // Silence Rotation2d warnings
+    var mathShared = MathSharedStore.getMathShared();
+    MathSharedStore.setMathShared(
+        new MathShared() {
+          @Override
+          public void reportError(String error, StackTraceElement[] stackTrace) {
+            if (error.startsWith("x and y components of Rotation2d are zero")) {
+              return;
+            }
+            mathShared.reportError(error, stackTrace);
+          }
+
+          @Override
+          public void reportUsage(String id, String count) {
+            mathShared.reportUsage(id, count);
+          }
+
+          @Override
+          public double getTimestamp() {
+            return mathShared.getTimestamp();
+          }
+        });
   }
 
   /** This function is called periodically during all modes. */
