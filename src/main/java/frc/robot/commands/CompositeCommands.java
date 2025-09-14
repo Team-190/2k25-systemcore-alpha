@@ -18,13 +18,19 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.shared.climber.Climber;
 import frc.robot.subsystems.shared.climber.ClimberConstants;
 import frc.robot.subsystems.shared.drive.Drive;
+import frc.robot.subsystems.shared.elevator.Elevator.ElevatorCSB;
 import frc.robot.subsystems.shared.elevator.Elevator.ElevatorFSM;
+import frc.robot.subsystems.shared.elevator.ElevatorConstants;
 import frc.robot.subsystems.shared.elevator.ElevatorConstants.ElevatorPositions;
+import frc.robot.subsystems.shared.funnel.Funnel.FunnelCSB;
+import frc.robot.subsystems.shared.funnel.FunnelConstants;
 import frc.robot.subsystems.shared.visionlimelight.Camera;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructure;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructureStates;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntake;
+import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeConstants;
 import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulator;
+import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulatorConstants;
 import frc.robot.util.AllianceFlipUtil;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -388,5 +394,134 @@ public class CompositeCommands {
         manipulator.homingSequence(),
         intake.homingSequence(),
         Commands.runOnce(() -> elevator.setPosition()));
+  }
+
+  public static final Command elevatorDemo(
+      ElevatorCSB elevator, V2_RedundancyManipulator manipulator) {
+    return Commands.sequence(
+            Commands.run(() -> elevator.setVoltage(1))
+                .until(
+                    () ->
+                        elevator.getPositionMeters()
+                            >= ElevatorConstants.ElevatorPositions.L4.getPosition()),
+            Commands.run(
+                () -> {
+                  if (manipulator.getArmAngle().getRadians()
+                      <= V2_RedundancyManipulatorConstants.ManipulatorArmState.STOW_DOWN
+                          .getAngle()
+                          .getRadians()) {
+                    elevator.setVoltage(-0.2);
+                  } else {
+                    elevator.setVoltage(0);
+                  }
+                }))
+        .until(
+            () ->
+                elevator.getPositionMeters()
+                    <= ElevatorConstants.ElevatorPositions.L1.getPosition())
+        .repeatedly();
+  }
+
+  public static final Command funnelDemo(FunnelCSB funnel) {
+    return Commands.sequence(
+            Commands.run(() -> funnel.setVoltage(-0.75))
+                .until(
+                    () ->
+                        funnel.getAngle().getRadians()
+                            <= FunnelConstants.FunnelState.OPENED.getAngle().getRadians()),
+            Commands.run(() -> funnel.setVoltage(0.75))
+                .until(
+                    () ->
+                        funnel.getAngle().getRadians()
+                            >= FunnelConstants.FunnelState.CLOSED.getAngle().getRadians()))
+        .repeatedly();
+  }
+
+  public static final Command manipulatorDemo(
+      ElevatorCSB elevator, V2_RedundancyManipulator manipulator) {
+    return Commands.sequence(
+            Commands.waitUntil(
+                () ->
+                    elevator.getPositionMeters()
+                        >= ElevatorConstants.ElevatorPositions.ALGAE_MID.getPosition()),
+            Commands.run(() -> manipulator.setAlgaeArmVoltage(2))
+                .until(
+                    () ->
+                        manipulator.getArmAngle().getRadians()
+                                >= V2_RedundancyManipulatorConstants.ManipulatorArmState.STOW_UP
+                                    .getAngle()
+                                    .minus(Rotation2d.fromDegrees(5))
+                                    .getRadians()
+                            || elevator.getPositionMeters()
+                                >= ElevatorConstants.ElevatorPositions.L4.getPosition()),
+            Commands.waitUntil(
+                () ->
+                    elevator.getPositionMeters()
+                        >= ElevatorConstants.ElevatorPositions.L4.getPosition()),
+            Commands.run(
+                    () -> {
+                      manipulator.setAlgaeArmVoltage(-2.0);
+                    })
+                .until(
+                    () ->
+                        manipulator.getArmAngle().getRadians()
+                                <= V2_RedundancyManipulatorConstants.ManipulatorArmState.STOW_DOWN
+                                    .getAngle()
+                                    .getRadians()
+                            || elevator.getPositionMeters()
+                                <= ElevatorConstants.ElevatorPositions.L1.getPosition()),
+            Commands.waitUntil(
+                () ->
+                    elevator.getPositionMeters()
+                        <= ElevatorConstants.ElevatorPositions.L1.getPosition()))
+        .repeatedly();
+  }
+
+  public static final Command intakeDemo(V2_RedundancyIntake intake) {
+    return Commands.sequence(
+            Commands.run(() -> intake.setExtensionVoltage(1))
+                .until(
+                    () ->
+                        intake.getExtension()
+                            >= V2_RedundancyIntakeConstants.IntakeExtensionState.INTAKE
+                                .getDistance()),
+            Commands.run(() -> intake.setExtensionVoltage(-1))
+                .until(
+                    () ->
+                        intake.getExtension()
+                            <= V2_RedundancyIntakeConstants.IntakeExtensionState.STOW
+                                .getDistance()))
+        .repeatedly();
+  }
+
+  public static final Command demo(
+      Drive drive,
+      ElevatorCSB elevator,
+      FunnelCSB funnel,
+      V2_RedundancyManipulator manipulator,
+      V2_RedundancyIntake intake) {
+    return Commands.parallel(
+        Commands.run(() -> drive.runVelocity(new ChassisSpeeds(0, 0, Math.PI / 12.0))),
+        elevatorDemo(elevator, manipulator),
+        funnelDemo(funnel),
+        manipulatorDemo(elevator, manipulator),
+        intakeDemo(intake));
+  }
+
+  public static final Command stopDemo(
+      Drive drive,
+      ElevatorCSB elevator,
+      FunnelCSB funnel,
+      V2_RedundancyManipulator manipulator,
+      V2_RedundancyIntake intake) {
+    return Commands.sequence(
+        Commands.runOnce(() -> drive.stop())
+        // Commands.runOnce(() -> manipulator.setAlgaeArmGoal(ManipulatorArmState.STOW_DOWN)),
+        // manipulator.waitUntilAlgaeArmAtGoal(),
+        // Commands.runOnce(() -> intake.setExtensionGoal(IntakeExtensionState.STOW)),
+        // intake.waitUntilExtensionAtGoal(),
+        // funnel.setClapDaddyGoal(FunnelState.OPENED),
+        // elevator.setPosition(() -> ReefState.STOW));
+        );
   }
 }

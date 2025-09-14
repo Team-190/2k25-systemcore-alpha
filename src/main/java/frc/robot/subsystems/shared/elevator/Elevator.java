@@ -247,13 +247,9 @@ public class Elevator {
       return this.runOnce(() -> Elevator.this.setPosition(newPosition));
     }
 
-    public Command setVoltage(double volts) {
-      return this.runEnd(
-          () -> {
-            isClosedLoop = false;
-            io.setVoltage(volts);
-          },
-          () -> io.setVoltage(0.0));
+    public void setVoltage(double volts) {
+      isClosedLoop = false;
+      io.setVoltage(volts);
     }
 
     public Command resetPosition() {
@@ -293,6 +289,10 @@ public class Elevator {
 
     public BooleanSupplier inFastScoringTolerance() {
       return Elevator.this.inFastScoringTolerance();
+    }
+
+    public double getVelocityMetersPerSecond() {
+      return inputs.velocityMetersPerSecond;
     }
   }
 

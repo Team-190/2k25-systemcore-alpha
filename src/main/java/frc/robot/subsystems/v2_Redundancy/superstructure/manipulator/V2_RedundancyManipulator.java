@@ -13,6 +13,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.RobotState;
@@ -27,7 +28,7 @@ import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
-public class V2_RedundancyManipulator {
+public class V2_RedundancyManipulator extends SubsystemBase {
   private final V2_RedundancyManipulatorIO io;
   private final V2_RedundancyManipulatorIOInputsAutoLogged inputs;
   private boolean isClosedLoop;
@@ -195,5 +196,10 @@ public class V2_RedundancyManipulator {
       y = 0.0005 * Math.pow(x, 2) - 0.1015 * x + 3.7425;
     }
     return MathUtil.clamp(1.25 * y, 0.10, ManipulatorRollerState.ALGAE_INTAKE.getVoltage() / 1.5);
+  }
+
+  public void setAlgaeArmVoltage(double volts) {
+    isClosedLoop = false;
+    io.setArmVoltage(volts);
   }
 }

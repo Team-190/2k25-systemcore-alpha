@@ -11,6 +11,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructure;
@@ -23,7 +24,7 @@ import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
-public class V2_RedundancyIntake {
+public class V2_RedundancyIntake extends SubsystemBase {
   private final V2_RedundancyIntakeIO io;
   private final V2_RedundancyIntakeIOInputsAutoLogged inputs;
 
@@ -213,5 +214,9 @@ public class V2_RedundancyIntake {
 
   public Command waitUntilExtensionAtGoal() {
     return Commands.sequence(Commands.wait(0.02), Commands.waitUntil(this::atGoal));
+  }
+
+  public void setExtensionVoltage(double volts) {
+    io.setExtensionVoltage(volts);
   }
 }

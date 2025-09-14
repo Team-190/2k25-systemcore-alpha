@@ -85,12 +85,12 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         ElevatorConstants.ELEVATOR_PARAMETERS.MAX_HEIGHT_METERS()
             / (2 * Math.PI * ElevatorConstants.DRUM_RADIUS)
             * ElevatorConstants.ELEVATOR_GEAR_RATIO;
-    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
     config.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
         ElevatorConstants.ELEVATOR_PARAMETERS.MIN_HEIGHT_METERS()
             / (2 * Math.PI * ElevatorConstants.DRUM_RADIUS)
             * ElevatorConstants.ELEVATOR_GEAR_RATIO;
-    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     config.MotionMagic.MotionMagicAcceleration =
         ElevatorConstants.CONSTRAINTS.maxAccelerationMetersPerSecondSquared().get()
             / (2 * Math.PI * ElevatorConstants.DRUM_RADIUS)

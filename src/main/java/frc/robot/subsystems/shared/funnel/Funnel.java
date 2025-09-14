@@ -302,6 +302,11 @@ public class Funnel {
     public void updateConstraints(double maxAcceleration, double maxVelocity) {
       Funnel.this.updateConstraints(maxAcceleration, maxVelocity);
     }
+
+    public void setVoltage(double volts) {
+      isClosedLoop = false;
+      io.setClapDaddyVoltage(volts);
+    }
   }
 
   public FunnelFSM getFSM() {

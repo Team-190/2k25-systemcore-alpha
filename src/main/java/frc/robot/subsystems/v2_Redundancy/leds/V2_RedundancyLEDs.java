@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color;
-import frc.robot.FieldConstants.Reef.ReefPose;
 import frc.robot.Robot;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotMode;
@@ -100,29 +99,30 @@ public class V2_RedundancyLEDs extends Leds {
       } else if (RobotState.isHasAlgae()) {
         wave(Color.kBlack, Color.kDarkGreen, RAINBOW_CYCLE_LENGTH, 1.0);
       } else {
-        if (RobotState.getOIData().currentReefPost().equals(ReefPose.RIGHT)) {
-          if (RobotState.isIntakingCoral()) {
-            solid(Color.kAqua, LEFT_LENGTH_START, LEFT_LENGTH_END);
-          } else {
-            breath(
-                Color.kBlack,
-                Color.kDarkViolet,
-                Timer.getFPGATimestamp(),
-                LEFT_LENGTH_START,
-                LEFT_LENGTH_END);
-          }
-        } else if (RobotState.getOIData().currentReefPost().equals(ReefPose.LEFT)) {
-          if (RobotState.isIntakingCoral()) {
-            solid(Color.kAqua, RIGHT_LENGTH_START, RIGHT_LENGTH_END);
-          } else {
-            breath(
-                Color.kBlack,
-                Color.kDarkViolet,
-                Timer.getFPGATimestamp(),
-                RIGHT_LENGTH_START,
-                RIGHT_LENGTH_END);
-          }
-        }
+        rainbow(LENGTH, BREATH_DURATION);
+        // if (RobotState.getOIData().currentReefPost().equals(ReefPose.RIGHT)) {
+        //   if (RobotState.isIntakingCoral()) {
+        //     solid(Color.kAqua, LEFT_LENGTH_START, LEFT_LENGTH_END);
+        //   } else {
+        //     breath(
+        //         Color.kBlack,
+        //         Color.kDarkViolet,
+        //         Timer.getFPGATimestamp(),
+        //         LEFT_LENGTH_START,
+        //         LEFT_LENGTH_END);
+        //   }
+        // } else if (RobotState.getOIData().currentReefPost().equals(ReefPose.LEFT)) {
+        //   if (RobotState.isIntakingCoral()) {
+        //     solid(Color.kAqua, RIGHT_LENGTH_START, RIGHT_LENGTH_END);
+        //   } else {
+        //     breath(
+        //         Color.kBlack,
+        //         Color.kDarkViolet,
+        //         Timer.getFPGATimestamp(),
+        //         RIGHT_LENGTH_START,
+        //         RIGHT_LENGTH_END);
+        //   }
+        // }
       }
     }
   }

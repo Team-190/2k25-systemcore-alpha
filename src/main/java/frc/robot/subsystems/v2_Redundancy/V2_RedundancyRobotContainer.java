@@ -12,16 +12,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.FieldConstants.Reef.ReefPose;
-import frc.robot.FieldConstants.Reef.ReefState;
 import frc.robot.RobotContainer;
 import frc.robot.RobotState;
 import frc.robot.commands.AutonomousCommands;
+import frc.robot.commands.CompositeCommands;
 import frc.robot.commands.CompositeCommands.SharedCommands;
-import frc.robot.commands.CompositeCommands.V2_RedundancyCompositeCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.shared.climber.Climber;
 import frc.robot.subsystems.shared.climber.ClimberIO;
@@ -35,13 +32,12 @@ import frc.robot.subsystems.shared.drive.ModuleIO;
 import frc.robot.subsystems.shared.drive.ModuleIOSim;
 import frc.robot.subsystems.shared.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.shared.elevator.Elevator;
-import frc.robot.subsystems.shared.elevator.Elevator.ElevatorFSM;
-import frc.robot.subsystems.shared.elevator.ElevatorConstants.ElevatorPositions;
+import frc.robot.subsystems.shared.elevator.Elevator.ElevatorCSB;
 import frc.robot.subsystems.shared.elevator.ElevatorIO;
 import frc.robot.subsystems.shared.elevator.ElevatorIOSim;
 import frc.robot.subsystems.shared.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.shared.funnel.Funnel;
-import frc.robot.subsystems.shared.funnel.Funnel.FunnelFSM;
+import frc.robot.subsystems.shared.funnel.Funnel.FunnelCSB;
 import frc.robot.subsystems.shared.funnel.FunnelIO;
 import frc.robot.subsystems.shared.funnel.FunnelIOSim;
 import frc.robot.subsystems.shared.funnel.FunnelIOTalonFX;
@@ -51,12 +47,10 @@ import frc.robot.subsystems.v2_Redundancy.leds.V2_RedundancyLEDs;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructure;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructureStates;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntake;
-import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeConstants.IntakeRollerState;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeIO;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeIOSim;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeIOTalonFX;
 import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulator;
-import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulatorConstants.ManipulatorRollerState;
 import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulatorIO;
 import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulatorIOSim;
 import frc.robot.subsystems.v2_Redundancy.superstructure.manipulator.V2_RedundancyManipulatorIOTalonFX;
@@ -68,8 +62,8 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
   // Subsystems
   private Climber climber;
   private Drive drive;
-  private ElevatorFSM elevator;
-  private FunnelFSM funnel;
+  private ElevatorCSB elevator;
+  private FunnelCSB funnel;
   private V2_RedundancyIntake intake;
   private V2_RedundancyLEDs leds;
   private V2_RedundancyManipulator manipulator;
@@ -96,12 +90,13 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
                   new ModuleIOTalonFX(1, DriveConstants.FRONT_RIGHT),
                   new ModuleIOTalonFX(2, DriveConstants.BACK_LEFT),
                   new ModuleIOTalonFX(3, DriveConstants.BACK_RIGHT));
-          elevator = new Elevator(new ElevatorIOTalonFX()).getFSM();
-          funnel = new Funnel(new FunnelIOTalonFX()).getFSM();
+          elevator = new Elevator(new ElevatorIOTalonFX()).getCSB();
+          funnel = new Funnel(new FunnelIOTalonFX()).getCSB();
           intake = new V2_RedundancyIntake(new V2_RedundancyIntakeIOTalonFX());
           leds = new V2_RedundancyLEDs();
           manipulator = new V2_RedundancyManipulator(new V2_RedundancyManipulatorIOTalonFX());
-          superstructure = new V2_RedundancySuperstructure(elevator, funnel, intake, manipulator);
+          //   superstructure = new V2_RedundancySuperstructure(elevator, funnel, intake,
+          // manipulator);
           vision = new Vision(RobotCameras.V2_REDUNDANCY_CAMS);
           break;
         case V2_REDUNDANCY_SIM:
@@ -113,8 +108,8 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
                   new ModuleIOSim(DriveConstants.FRONT_RIGHT),
                   new ModuleIOSim(DriveConstants.BACK_LEFT),
                   new ModuleIOSim(DriveConstants.BACK_RIGHT));
-          elevator = new Elevator(new ElevatorIOSim()).getFSM();
-          funnel = new Funnel(new FunnelIOSim()).getFSM();
+          elevator = new Elevator(new ElevatorIOSim()).getCSB();
+          funnel = new Funnel(new FunnelIOSim()).getCSB();
           intake = new V2_RedundancyIntake(new V2_RedundancyIntakeIOSim());
           manipulator = new V2_RedundancyManipulator(new V2_RedundancyManipulatorIOSim());
           vision = new Vision();
@@ -137,10 +132,10 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
               new ModuleIO() {});
     }
     if (elevator == null) {
-      elevator = new Elevator(new ElevatorIO() {}).getFSM();
+      elevator = new Elevator(new ElevatorIO() {}).getCSB();
     }
     if (funnel == null) {
-      funnel = new Funnel(new FunnelIO() {}).getFSM();
+      funnel = new Funnel(new FunnelIO() {}).getCSB();
     }
     if (intake == null) {
       intake = new V2_RedundancyIntake(new V2_RedundancyIntakeIO() {});
@@ -151,7 +146,7 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
     if (vision == null) {
       vision = new Vision();
     }
-    superstructure = new V2_RedundancySuperstructure(elevator, funnel, intake, manipulator);
+    // superstructure = new V2_RedundancySuperstructure(elevator, funnel, intake, manipulator);
 
     configureButtonBindings();
     configureAutos();
@@ -159,101 +154,107 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
 
   private void configureButtonBindings() {
     // Generic triggers
-    Trigger elevatorStow =
-        new Trigger(
-            () ->
-                elevator.getPosition().equals(ElevatorPositions.CORAL_INTAKE)
-                    || elevator.getPosition().equals(ElevatorPositions.STOW));
-    Trigger elevatorNotStow =
-        new Trigger(
-            () ->
-                !elevator.getPosition().equals(ElevatorPositions.CORAL_INTAKE)
-                    && !elevator.getPosition().equals(ElevatorPositions.STOW));
+    // Trigger elevatorStow =
+    //     new Trigger(
+    //         () ->
+    //             elevator.getPosition().equals(ElevatorPositions.CORAL_INTAKE)
+    //                 || elevator.getPosition().equals(ElevatorPositions.STOW));
+    // Trigger elevatorNotStow =
+    //     new Trigger(
+    //         () ->
+    //             !elevator.getPosition().equals(ElevatorPositions.CORAL_INTAKE)
+    //                 && !elevator.getPosition().equals(ElevatorPositions.STOW));
     // Trigger halfScoreTrigger =
     //     new Trigger(() -> operator.getLeftY() < -DriveConstants.OPERATOR_DEADBAND);
     // Trigger unHalfScoreTrigger =
     //     new Trigger(() -> operator.getLeftY() > DriveConstants.OPERATOR_DEADBAND);
 
-    Trigger operatorFunnelOverride =
-        new Trigger(() -> Math.hypot(operator.getRightX(), operator.getRightY()) > 0.5);
+    // Trigger operatorFunnelOverride =
+    //     new Trigger(() -> Math.hypot(operator.getRightX(), operator.getRightY()) > 0.5);
 
     // Default drive command
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -driver.getLeftY(),
-            () -> -driver.getLeftX(),
-            () -> -driver.getRightX(),
+            () -> -driver.getLeftY() * 0.25,
+            () -> -driver.getLeftX() * 0.25,
+            () -> -driver.getRightX() * 0.25,
             () -> false,
-            operator.back(),
-            driver.povRight()));
+            () -> false,
+            () -> false));
 
     // Driver face buttons
-    driver.y().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L4));
-    driver.x().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L3));
-    driver.b().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L2));
-    driver.a().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L1));
+    // driver.y().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L4));
+    // driver.x().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L3));
+    // driver.b().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L2));
+    // driver.a().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L1));
 
-    driver
-        .y()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L4, superstructure));
-    driver
-        .x()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L3, superstructure));
-    driver
-        .b()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L2, superstructure));
-    driver
-        .a()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L1, superstructure));
+    // driver
+    //     .y()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L4,
+    // superstructure));
+    // driver
+    //     .x()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L3,
+    // superstructure));
+    // driver
+    //     .b()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L2,
+    // superstructure));
+    // driver
+    //     .a()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L1,
+    // superstructure));
 
-    // Driver triggers
-    driver
-        .leftTrigger(0.5)
-        .whileTrue(V2_RedundancyCompositeCommands.intakeCoralDriverSequence(superstructure, intake))
-        .onFalse(superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
-    driver
-        .rightTrigger(0.5)
-        .whileTrue(
-            V2_RedundancyCompositeCommands.autoScoreCoralSequence(
-                drive, elevator, superstructure, RobotCameras.V2_REDUNDANCY_CAMS));
+    // // Driver triggers
+    // driver
+    //     .leftTrigger(0.5)
+    //     .whileTrue(V2_RedundancyCompositeCommands.intakeCoralDriverSequence(superstructure,
+    // intake))
+    //     .onFalse(superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
+    // driver
+    //     .rightTrigger(0.5)
+    //     .whileTrue(
+    //         V2_RedundancyCompositeCommands.autoScoreCoralSequence(
+    //             drive, elevator, superstructure, RobotCameras.V2_REDUNDANCY_CAMS));
 
     // Driver bumpers
-    driver
-        .leftBumper()
-        .whileTrue(V2_RedundancyCompositeCommands.floorIntakeSequence(superstructure))
-        .onFalse(
-            Commands.deadline(
-                    V2_RedundancyCompositeCommands.postFloorIntakeSequence(superstructure),
-                    Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.OUTTAKE)))
-                .andThen(Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.STOP))));
-    driver.rightBumper().onTrue(Commands.runOnce(() -> RobotState.toggleReefPost()));
+    // driver
+    //     .leftBumper()
+    //     .whileTrue(V2_RedundancyCompositeCommands.floorIntakeSequence(superstructure))
+    //     .onFalse(
+    //         Commands.deadline(
+    //                 V2_RedundancyCompositeCommands.postFloorIntakeSequence(superstructure),
+    //                 Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.OUTTAKE)))
+    //             .andThen(Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.STOP))));
+    // driver.rightBumper().onTrue(Commands.runOnce(() -> RobotState.toggleReefPost()));
 
-    // Driver POV
-    driver.povUp().onTrue(superstructure.setPosition());
+    // // Driver POV
+    // driver.povUp().onTrue(superstructure.setPosition());
     driver
         .start()
         .onTrue(Commands.print("button pressed").andThen(SharedCommands.resetHeading(drive)));
-    driver.povLeft().onTrue(DriveCommands.inchMovement(drive, -0.5, .07));
+    // driver.povLeft().onTrue(DriveCommands.inchMovement(drive, -0.5, .07));
 
-    driver
-        .leftStick()
-        .onTrue(
-            V2_RedundancyCompositeCommands.scoreCoralSequence(
-                elevator, superstructure, () -> RobotState.getReefAlignData().atCoralSetpoint()));
+    // driver
+    //     .leftStick()
+    //     .onTrue(
+    //         V2_RedundancyCompositeCommands.scoreCoralSequence(
+    //             elevator, superstructure, () ->
+    // RobotState.getReefAlignData().atCoralSetpoint()));
 
-    driver
-        .back()
-        .whileTrue(
-            V2_RedundancyCompositeCommands.intakeAlgaeFromReefSequence(
-                drive,
-                superstructure,
-                () -> RobotState.getReefAlignData().algaeIntakeHeight(),
-                RobotCameras.V2_REDUNDANCY_CAMS));
+    // driver
+    //     .back()
+    //     .whileTrue(
+    //         V2_RedundancyCompositeCommands.intakeAlgaeFromReefSequence(
+    //             drive,
+    //             superstructure,
+    //             () -> RobotState.getReefAlignData().algaeIntakeHeight(),
+    //             RobotCameras.V2_REDUNDANCY_CAMS));
 
     // driver
     //     .start()
@@ -268,79 +269,91 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
     //             RobotCameras.V2_REDUNDANCY_CAMS));
 
     // Operator face buttons
-    operator.y().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L4));
-    operator.x().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L3));
-    operator.b().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L2));
-    operator.a().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L1));
+    // operator.y().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L4));
+    // operator.x().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L3));
+    // operator.b().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L2));
+    // operator.a().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L1));
 
-    operator
-        .y()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L4, superstructure));
-    operator
-        .x()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L3, superstructure));
-    operator
-        .b()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L2, superstructure));
-    operator
-        .a()
-        .and(elevatorNotStow)
-        .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L1, superstructure));
+    // operator
+    //     .y()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L4,
+    // superstructure));
+    // operator
+    //     .x()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L3,
+    // superstructure));
+    // operator
+    //     .b()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L2,
+    // superstructure));
+    // operator
+    //     .a()
+    //     .and(elevatorNotStow)
+    //     .onTrue(V2_RedundancyCompositeCommands.setDynamicReefHeight(ReefState.L1,
+    // superstructure));
 
     // Operator triggers
-    operator
-        .leftTrigger(0.5)
-        .whileTrue(
-            V2_RedundancyCompositeCommands.intakeCoralOperatorSequence(superstructure, intake))
-        .onFalse(superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
-    operator
-        .rightTrigger(0.5)
-        .whileTrue(
-            superstructure.override(
-                () -> manipulator.setRollerGoal(ManipulatorRollerState.SCORE_CORAL), 0.4));
+    // operator
+    //     .leftTrigger(0.5)
+    //     .whileTrue(
+    //         V2_RedundancyCompositeCommands.intakeCoralOperatorSequence(superstructure, intake))
+    //     .onFalse(superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
+    // operator
+    //     .rightTrigger(0.5)
+    //     .whileTrue(
+    //         superstructure.override(
+    //             () -> manipulator.setRollerGoal(ManipulatorRollerState.SCORE_CORAL), 0.4));
 
     // Operator bumpers
-    operator.leftBumper().onTrue(Commands.runOnce(() -> RobotState.setReefPost(ReefPose.LEFT)));
-    operator.rightBumper().onTrue(Commands.runOnce(() -> RobotState.setReefPost(ReefPose.RIGHT)));
+    // operator.leftBumper().onTrue(Commands.runOnce(() -> RobotState.setReefPost(ReefPose.LEFT)));
+    // operator.rightBumper().onTrue(Commands.runOnce(() ->
+    // RobotState.setReefPost(ReefPose.RIGHT)));
 
-    operator.povUp().onTrue(V2_RedundancyCompositeCommands.climb(superstructure, climber, drive));
-    operator.povDown().whileTrue(climber.winchClimberManual());
-    operator
-        .povLeft()
-        .whileTrue(superstructure.runGoal(V2_RedundancySuperstructureStates.PROCESSOR))
-        .onFalse(
-            superstructure
-                .runActionWithTimeout(V2_RedundancySuperstructureStates.SCORE_PROCESSOR, 1)
-                .finallyDo(() -> RobotState.setHasAlgae(false)));
+    // operator.povUp().onTrue(V2_RedundancyCompositeCommands.climb(superstructure, climber,
+    // drive));
+    // operator.povDown().whileTrue(climber.winchClimberManual());
+    // operator
+    //     .povLeft()
+    //     .whileTrue(superstructure.runGoal(V2_RedundancySuperstructureStates.PROCESSOR))
+    //     .onFalse(
+    //         superstructure
+    //             .runActionWithTimeout(V2_RedundancySuperstructureStates.SCORE_PROCESSOR, 1)
+    //             .finallyDo(() -> RobotState.setHasAlgae(false)));
 
-    operator
-        .povRight()
-        .whileTrue(
-            superstructure
-                .override(() -> manipulator.setRollerGoal(ManipulatorRollerState.SCORE_ALGAE))
-                .finallyDo(() -> RobotState.setHasAlgae(false)));
-    operator.start().whileTrue(superstructure.runGoal(V2_RedundancySuperstructureStates.BARGE));
+    // operator
+    //     .povRight()
+    //     .whileTrue(
+    //         superstructure
+    //             .override(() -> manipulator.setRollerGoal(ManipulatorRollerState.SCORE_ALGAE))
+    //             .finallyDo(() -> RobotState.setHasAlgae(false)));
+    // operator.start().whileTrue(superstructure.runGoal(V2_RedundancySuperstructureStates.BARGE));
 
-    operator
-        .back()
-        .whileTrue(superstructure.runGoal(V2_RedundancySuperstructureStates.BARGE))
-        .onFalse(
-            superstructure
-                .runActionWithTimeout(V2_RedundancySuperstructureStates.SCORE_BARGE, 0.1)
-                .finallyDo(() -> RobotState.setHasAlgae(false)));
+    // operator
+    //     .back()
+    //     .whileTrue(superstructure.runGoal(V2_RedundancySuperstructureStates.BARGE))
+    //     .onFalse(
+    //         superstructure
+    //             .runActionWithTimeout(V2_RedundancySuperstructureStates.SCORE_BARGE, 0.1)
+    //             .finallyDo(() -> RobotState.setHasAlgae(false)));
 
     // Misc
-    operatorFunnelOverride
-        .whileTrue(
-            Commands.either(
-                superstructure.runGoal(V2_RedundancySuperstructureStates.FUNNEL_CLOSE_WITH_STOW_UP),
-                superstructure.runGoal(
-                    V2_RedundancySuperstructureStates.FUNNEL_CLOSE_WITH_STOW_DOWN),
-                () -> RobotState.isHasAlgae()))
-        .onFalse(superstructure.runPreviousState());
+    // operatorFunnelOverride
+    //     .whileTrue(
+    //         Commands.either(
+    //
+    // superstructure.runGoal(V2_RedundancySuperstructureStates.FUNNEL_CLOSE_WITH_STOW_UP),
+    //             superstructure.runGoal(
+    //                 V2_RedundancySuperstructureStates.FUNNEL_CLOSE_WITH_STOW_DOWN),
+    //             () -> RobotState.isHasAlgae()))
+    //     .onFalse(superstructure.runPreviousState());
+
+    driver
+        .y()
+        .whileTrue(CompositeCommands.demo(drive, elevator, funnel, manipulator, intake))
+        .whileFalse(CompositeCommands.stopDemo(drive, elevator, funnel, manipulator, intake));
   }
 
   private void configureAutos() {
@@ -350,8 +363,8 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
         "Drive FF Characterization", () -> DriveCommands.feedforwardCharacterization(drive));
     autoChooser.addCmd(
         "Wheel Radius Characterization", () -> DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addCmd("Elevator Characterization", () -> elevator.sysIdRoutine(superstructure));
-    autoChooser.addCmd("Funnel Characterization", () -> funnel.sysIdRoutine(superstructure));
+    // autoChooser.addCmd("Elevator Characterization", () -> elevator.sysIdRoutine(superstructure));
+    // autoChooser.addCmd("Funnel Characterization", () -> funnel.sysIdRoutine(superstructure));
     autoChooser.addCmd("Intake Characterization", () -> intake.sysIdRoutine(superstructure));
     autoChooser.addCmd(
         "Manipulator Characterization",
