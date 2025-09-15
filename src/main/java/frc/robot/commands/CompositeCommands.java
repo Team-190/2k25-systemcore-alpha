@@ -166,10 +166,8 @@ public class CompositeCommands {
     }
 
     /**
-     * Creates a command sequence to automatically score coral.
+     * andThen
      *
-     * @param drive The drive subsystem.
-     * @param elevator The elevator subsystem.
      * @param superstructure The superstructure subsystem.
      * @param cameras The vision cameras.
      * @return A command sequence to auto-score coral.
@@ -251,7 +249,8 @@ public class CompositeCommands {
                       () -> RobotState.isHasAlgae())),
               Commands.runEnd(
                       () -> drive.runVelocity(new ChassisSpeeds(1.0, 0.0, 0.0)), () -> drive.stop())
-                  .withTimeout(0.5)));
+                  .withTimeout(0.5),
+              superstructure.setReadyToIntake(false)));
     }
 
     /**
@@ -307,7 +306,8 @@ public class CompositeCommands {
               }),
           Commands.wait(1.0),
           Commands.runOnce(() -> RobotState.setHasAlgae(false)),
-          superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
+          superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN),
+          superstructure.setReadyToIntake(false));
     }
 
     /**
@@ -333,9 +333,10 @@ public class CompositeCommands {
     public static final Command postFloorIntakeSequence(
         V2_RedundancySuperstructure superstructure) {
       return Commands.either(
-          superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_UP),
-          superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN),
-          RobotState::isHasAlgae);
+              superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_UP),
+              superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN),
+              RobotState::isHasAlgae)
+          .andThen(superstructure.setReadyToIntake(false));
     }
 
     /**

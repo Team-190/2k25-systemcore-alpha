@@ -101,8 +101,8 @@ public class ClimberIOTalonFX implements ClimberIO {
     inputs.temperatureCelsius = temperatureCelsius.getValueAsDouble();
 
     // Update sensor inputs
-    inputs.redundantSwitchOne = redundantSwitchOne.get();
-    inputs.redundantSwitchTwo = redundantSwitchTwo.get();
+    inputs.redundantSwitchOne = !redundantSwitchOne.get();
+    inputs.redundantSwitchTwo = !redundantSwitchTwo.get();
 
     InternalLoggedTracer.record("Refresh Update Inputs", "Climber/TalonFX");
   }

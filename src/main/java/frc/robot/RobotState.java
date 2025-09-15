@@ -49,7 +49,6 @@ public class RobotState {
   @Getter @Setter private static boolean hasAlgae;
 
   @Getter @Setter private static boolean isIntakingCoral;
-  @Getter @Setter private static boolean isIntakingAlgae;
   @Getter @Setter private static boolean isAutoAligning;
   @Getter @Setter private static boolean autoClapOverride;
 

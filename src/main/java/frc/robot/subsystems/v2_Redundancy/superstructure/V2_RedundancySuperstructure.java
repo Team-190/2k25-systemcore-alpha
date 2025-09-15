@@ -128,14 +128,6 @@ public class V2_RedundancySuperstructure extends SubsystemBase {
 
     // Set RobotState variables
     RobotState.setIntakingCoral(targetState == V2_RedundancySuperstructureStates.INTAKE_STATION);
-    if ((RobotState.isIntakingAlgae() || manipulator.isIntakingAlgae())
-        && (targetState == V2_RedundancySuperstructureStates.INTAKE_FLOOR
-            || targetState == V2_RedundancySuperstructureStates.INTAKE_REEF_L2
-            || targetState == V2_RedundancySuperstructureStates.INTAKE_REEF_L3)) {
-      RobotState.setIntakingAlgae(true);
-    } else {
-      RobotState.setIntakingAlgae(false);
-    }
     funnel.setManipulatorHasCoral(manipulator.hasCoral());
 
     if (RobotMode.disabled()) {
@@ -629,5 +621,9 @@ public class V2_RedundancySuperstructure extends SubsystemBase {
    */
   public boolean elevatorAtGoal() {
     return elevator.atGoal();
+  }
+
+  public Command setReadyToIntake(boolean ready) {
+    return Commands.runOnce(() -> manipulator.setReadyToIntake(ready));
   }
 }

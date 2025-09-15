@@ -24,6 +24,7 @@ import frc.robot.util.ExternalLoggedTracer;
 import frc.robot.util.InternalLoggedTracer;
 import java.util.Set;
 import lombok.Getter;
+import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -31,6 +32,7 @@ public class V2_RedundancyManipulator {
   private final V2_RedundancyManipulatorIO io;
   private final V2_RedundancyManipulatorIOInputsAutoLogged inputs;
   private boolean isClosedLoop;
+  @Getter @Setter private boolean readyToIntake;
 
   @Getter
   @AutoLogOutput(key = "Manipulator/Arm Goal")
@@ -73,9 +75,20 @@ public class V2_RedundancyManipulator {
       io.setRollerVoltage(rollerGoal.getVoltage());
     }
 
-    if (hasAlgae() && RobotState.isIntakingAlgae()) {
-      RobotState.setHasAlgae(true);
+    if (!readyToIntake
+        && isIntakingAlgae()
+        && (rollerGoal.equals(ManipulatorRollerState.ALGAE_INTAKE)
+            || rollerGoal.equals(ManipulatorRollerState.REMOVE_ALGAE))) {
+      readyToIntake = true;
     }
+
+    if (hasAlgae()) {
+      RobotState.setHasAlgae(true);
+      readyToIntake = false;
+    }
+
+    Logger.recordOutput("ready to intake", readyToIntake);
+
     InternalLoggedTracer.record("Manipulator Logic", "Manipulator/Periodic");
     ExternalLoggedTracer.record("Manipulator Total", "Manipulator/Periodic");
   }
@@ -106,9 +119,12 @@ public class V2_RedundancyManipulator {
 
   @AutoLogOutput(key = "Manipulator/Has Algae")
   public boolean hasAlgae() {
-    return RobotState.isIntakingAlgae()
+    return readyToIntake
+        && (rollerGoal.equals(ManipulatorRollerState.ALGAE_INTAKE)
+            || rollerGoal.equals(ManipulatorRollerState.REMOVE_ALGAE))
         && Math.abs(inputs.rollerAccelerationRadiansPerSecondSquared) < 1000
-        && Math.abs(inputs.rollerVelocityRadiansPerSecond) <= 70;
+        && Math.abs(inputs.rollerVelocityRadiansPerSecond) <= 70
+        && inputs.rollerTorqueCurrentAmps >= 30;
   }
 
   @AutoLogOutput(key = "Manipulator/Intaking Algae")
@@ -187,6 +203,7 @@ public class V2_RedundancyManipulator {
   }
 
   private double holdVoltage() {
+    System.out.println("holding");
     double y;
     double x = Math.abs(inputs.rollerTorqueCurrentAmps);
     if (x <= 20) {

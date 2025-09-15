@@ -51,7 +51,6 @@ import frc.robot.subsystems.v2_Redundancy.leds.V2_RedundancyLEDs;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructure;
 import frc.robot.subsystems.v2_Redundancy.superstructure.V2_RedundancySuperstructureStates;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntake;
-import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeConstants.IntakeRollerState;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeIO;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeIOSim;
 import frc.robot.subsystems.v2_Redundancy.superstructure.intake.V2_RedundancyIntakeIOTalonFX;
@@ -145,6 +144,9 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
     if (intake == null) {
       intake = new V2_RedundancyIntake(new V2_RedundancyIntakeIO() {});
     }
+    if (leds == null) {
+      leds = new V2_RedundancyLEDs();
+    }
     if (manipulator == null) {
       manipulator = new V2_RedundancyManipulator(new V2_RedundancyManipulatorIO() {});
     }
@@ -226,18 +228,12 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
     driver
         .leftBumper()
         .whileTrue(V2_RedundancyCompositeCommands.floorIntakeSequence(superstructure))
-        .onFalse(
-            Commands.deadline(
-                    V2_RedundancyCompositeCommands.postFloorIntakeSequence(superstructure),
-                    Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.OUTTAKE)))
-                .andThen(Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.STOP))));
+        .onFalse(V2_RedundancyCompositeCommands.postFloorIntakeSequence(superstructure));
     driver.rightBumper().onTrue(Commands.runOnce(() -> RobotState.toggleReefPost()));
 
     // Driver POV
     driver.povUp().onTrue(superstructure.setPosition());
-    driver
-        .start()
-        .onTrue(Commands.print("button pressed").andThen(SharedCommands.resetHeading(drive)));
+    driver.povDown().onTrue(SharedCommands.resetHeading(drive));
     driver.povLeft().onTrue(DriveCommands.inchMovement(drive, -0.5, .07));
 
     driver
@@ -255,17 +251,17 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
                 () -> RobotState.getReefAlignData().algaeIntakeHeight(),
                 RobotCameras.V2_REDUNDANCY_CAMS));
 
-    // driver
-    //     .start()
-    //     .whileTrue(
-    //         V2_RedundancyCompositeCommands.dropAlgae(
-    //             drive,
-    //             elevator,
-    //             manipulator,
-    //             intake,
-    //             superstructure,
-    //             () -> RobotState.getReefAlignData().algaeIntakeHeight(),
-    //             RobotCameras.V2_REDUNDANCY_CAMS));
+    driver
+        .start()
+        .whileTrue(
+            V2_RedundancyCompositeCommands.dropAlgae(
+                drive,
+                elevator,
+                manipulator,
+                intake,
+                superstructure,
+                () -> RobotState.getReefAlignData().algaeIntakeHeight(),
+                RobotCameras.V2_REDUNDANCY_CAMS));
 
     // Operator face buttons
     operator.y().and(elevatorStow).onTrue(SharedCommands.setStaticReefHeight(ReefState.L4));
@@ -427,9 +423,6 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
         drive.getYawVelocity(),
         drive.getFieldRelativeVelocity(),
         drive.getModulePositions(),
-        intake.getExtension(),
-        manipulator.getArmAngle(),
-        elevator.getPositionMeters(),
         vision.getCameras());
 
     LTNUpdater.updateDrive(drive);
