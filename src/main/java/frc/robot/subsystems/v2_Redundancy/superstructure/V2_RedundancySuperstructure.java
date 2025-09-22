@@ -626,4 +626,45 @@ public class V2_RedundancySuperstructure extends SubsystemBase {
   public Command setReadyToIntake(boolean ready) {
     return Commands.runOnce(() -> manipulator.setReadyToIntake(ready));
   }
+
+  public Command allTransition() {
+    Command all = runGoal(V2_RedundancySuperstructureStates.STOW_DOWN);
+    for (var source : V2_RedundancySuperstructureStates.values()) {
+      for (var sink : V2_RedundancySuperstructureStates.values()) {
+        if (source == sink) continue;
+        var edge = graph.getEdge(source, sink);
+        if (edge != null) {
+
+          if (source != V2_RedundancySuperstructureStates.START
+              && sink != V2_RedundancySuperstructureStates.START
+              && source != V2_RedundancySuperstructureStates.OVERRIDE) {
+            all =
+                all.andThen(
+                    runGoal(sink),
+                    runOnce(() -> System.out.println("Initial Pose:" + sink)),
+                    Commands.wait(2.0));
+            all =
+                all.andThen(
+                    runGoal(source),
+                    runOnce(() -> System.out.println("Final Pose:" + source)),
+                    Commands.wait(2.0));
+          }
+        }
+      }
+    }
+    return all;
+  }
+
+  public Command bargeTransitions() {
+    return Commands.sequence(
+        runGoal(V2_RedundancySuperstructureStates.BARGE),
+        Commands.wait(2.0),
+        runGoal(V2_RedundancySuperstructureStates.SCORE_BARGE),
+        Commands.wait(2.0),
+        runGoal(V2_RedundancySuperstructureStates.BARGE),
+        Commands.wait(2.0),
+        runGoal(V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM),
+        Commands.wait(2.0),
+        runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
+  }
 }
