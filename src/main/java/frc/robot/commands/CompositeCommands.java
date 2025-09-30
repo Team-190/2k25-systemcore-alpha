@@ -111,7 +111,7 @@ public class CompositeCommands {
           Commands.parallel(
               superstructure.runReefScoreGoal(() -> ReefState.L1),
               Commands.sequence(
-                  Commands.wait(0.05),
+                  Commands.wait(0.25),
                   Commands.either(
                       DriveCommands.inchMovement(drive, -1, 0.1),
                       DriveCommands.inchMovement(drive, 1, 0.1),

@@ -122,7 +122,8 @@ public class V2_RedundancySuperstructure extends SubsystemBase {
         && elevator.atGoal()) {
       targetState.getAction().get(funnel, intake, manipulator);
     } else if (currentState != null
-        && !currentState.equals(V2_RedundancySuperstructureStates.OVERRIDE)) {
+        && !currentState.equals(V2_RedundancySuperstructureStates.OVERRIDE)
+        && atGoal()) {
       currentState.getAction().get(funnel, intake, manipulator);
     }
 
@@ -457,7 +458,7 @@ public class V2_RedundancySuperstructure extends SubsystemBase {
             },
         () ->
             switch (goal.get()) {
-              case L1 -> 0.8;
+              case L1 -> 0.75;
               case L2 -> 0.15;
               case L3 -> 0.15;
               case L4 -> 0.4;

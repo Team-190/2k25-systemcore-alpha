@@ -203,7 +203,6 @@ public class V2_RedundancyManipulator {
   }
 
   private double holdVoltage() {
-    System.out.println("holding");
     double y;
     double x = Math.abs(inputs.rollerTorqueCurrentAmps);
     if (x <= 20) {

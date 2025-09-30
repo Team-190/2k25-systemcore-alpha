@@ -1,15 +1,9 @@
-// Copyright 2021-2024 FRC 6328
+// Copyright (c) 2025 FRC 6328
 // http://github.com/Mechanical-Advantage
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.commands;
 
@@ -33,7 +27,7 @@ import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.shared.drive.Drive;
 import frc.robot.subsystems.shared.drive.DriveConstants;
-import frc.robot.subsystems.shared.vision.Camera;
+import frc.robot.subsystems.shared.visionlimelight.Camera;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.ExternalLoggedTracer;
 import frc.robot.util.InternalLoggedTracer;
@@ -202,21 +196,23 @@ public final class DriveCommands {
 
           InternalLoggedTracer.reset();
           ChassisSpeeds chassisSpeeds =
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  climbSpeed.getAsBoolean() ? fieldRelativeXVel * 0.25 : fieldRelativeXVel,
-                  climbSpeed.getAsBoolean() ? fieldRelativeYVel * 0.25 : fieldRelativeYVel,
-                  angular,
-                  isFlipped
-                      ? RobotState.getRobotPoseField().getRotation().plus(new Rotation2d(Math.PI))
-                      : RobotState.getRobotPoseField().getRotation());
+              new ChassisSpeeds(
+                      climbSpeed.getAsBoolean() ? fieldRelativeXVel * 0.25 : fieldRelativeXVel,
+                      climbSpeed.getAsBoolean() ? fieldRelativeYVel * 0.25 : fieldRelativeYVel,
+                      angular)
+                  .toRobotRelative(
+                      isFlipped
+                          ? RobotState.getRobotPoseField()
+                              .getRotation()
+                              .plus(new Rotation2d(Math.PI))
+                          : RobotState.getRobotPoseField().getRotation());
           InternalLoggedTracer.record(
               "Chassis Speeds", "Command Scheduler/Drive Commands/Joystick Drive");
 
           InternalLoggedTracer.reset();
-          Logger.recordOutput("Drive/JoystickDrive/xSpeed", chassisSpeeds.vxMetersPerSecond);
-          Logger.recordOutput("Drive/JoystickDrive/ySpeed", chassisSpeeds.vyMetersPerSecond);
-          Logger.recordOutput(
-              "Drive/JoystickDrive/thetaSpeed", chassisSpeeds.omegaRadiansPerSecond);
+          Logger.recordOutput("Drive/JoystickDrive/xSpeed", chassisSpeeds.vx);
+          Logger.recordOutput("Drive/JoystickDrive/ySpeed", chassisSpeeds.vy);
+          Logger.recordOutput("Drive/JoystickDrive/thetaSpeed", chassisSpeeds.omega);
           InternalLoggedTracer.record("Logging", "Command Scheduler/Drive Commands/Joystick Drive");
           // Convert to field relative speeds & send command
 
@@ -323,7 +319,7 @@ public final class DriveCommands {
         // Measurement sequence
         Commands.sequence(
             // Wait for modules to fully orient before starting measurement
-            Commands.waitSeconds(1.0),
+            Commands.wait(1.0),
 
             // Record starting measurement
             Commands.runOnce(
@@ -430,35 +426,6 @@ public final class DriveCommands {
                                             .coralSetpoint()
                                             .getRotation()
                                             .getRadians());
-
-                        ChassisSpeeds measuredSpeeds = drive.getMeasuredChassisSpeeds();
-                        double vx_prime =
-                            measuredSpeeds.vxMetersPerSecond
-                                    * Math.cos(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians())
-                                + measuredSpeeds.vyMetersPerSecond
-                                    * Math.sin(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians());
-
-                        double vy_prime =
-                            -measuredSpeeds.vxMetersPerSecond
-                                    * Math.sin(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians())
-                                + measuredSpeeds.vyMetersPerSecond
-                                    * Math.cos(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians());
                         InternalLoggedTracer.record(
                             "Create Rotated Errors",
                             "Command Scheduler/Drive Commands/Auto Align Coral");
@@ -470,7 +437,7 @@ public final class DriveCommands {
                               "Create XSpeed", "Command Scheduler/Drive Commands/Auto Align Algae");
                         } else {
                           InternalLoggedTracer.reset();
-                          alignXController.reset(ex_prime, vx_prime);
+                          alignXController.reset(ex_prime);
                           InternalLoggedTracer.record(
                               "Reset XSpeed", "Command Scheduler/Drive Commands/Auto Align Algae");
                         }
@@ -482,7 +449,7 @@ public final class DriveCommands {
 
                         } else {
                           InternalLoggedTracer.reset();
-                          alignYController.reset(ey_prime, vy_prime);
+                          alignYController.reset(ey_prime);
                           InternalLoggedTracer.record(
                               "Reset YSpeed", "Command Scheduler/Drive Commands/Auto Align Algae");
                         }
@@ -521,13 +488,12 @@ public final class DriveCommands {
 
                         InternalLoggedTracer.reset();
                         speeds =
-                            ChassisSpeeds.fromFieldRelativeSpeeds(
-                                -adjustedXSpeed,
-                                -adjustedYSpeed,
-                                reefThetaSpeedCalculate(),
-                                RobotState.getRobotPoseReef()
-                                    .getRotation()
-                                    .plus(new Rotation2d(Math.PI)));
+                            new ChassisSpeeds(
+                                    -adjustedXSpeed, -adjustedYSpeed, reefThetaSpeedCalculate())
+                                .toRobotRelative(
+                                    RobotState.getRobotPoseReef()
+                                        .getRotation()
+                                        .plus(new Rotation2d(Math.PI)));
                         InternalLoggedTracer.record(
                             "Update Populated ChassisSpeeds",
                             "Command Scheduler/Drive Commands/Auto Align Coral");
@@ -540,9 +506,9 @@ public final class DriveCommands {
                             "Command Scheduler/Drive Commands");
                       }
                       InternalLoggedTracer.reset();
-                      Logger.recordOutput("Drive/Coral/xSpeed", -speeds.vxMetersPerSecond);
-                      Logger.recordOutput("Drive/Coral/ySpeed", -speeds.vyMetersPerSecond);
-                      Logger.recordOutput("Drive/Coral/thetaSpeed", speeds.omegaRadiansPerSecond);
+                      Logger.recordOutput("Drive/Coral/xSpeed", -speeds.vx);
+                      Logger.recordOutput("Drive/Coral/ySpeed", -speeds.vy);
+                      Logger.recordOutput("Drive/Coral/thetaSpeed", speeds.omega);
                       InternalLoggedTracer.record(
                           "Logging", "Command Scheduler/Drive Commands/Auto Align Coral");
 
@@ -632,36 +598,6 @@ public final class DriveCommands {
                                             .algaeSetpoint()
                                             .getRotation()
                                             .getRadians());
-
-                        ChassisSpeeds measuredSpeeds = drive.getMeasuredChassisSpeeds();
-                        double vx_prime =
-                            measuredSpeeds.vxMetersPerSecond
-                                    * Math.cos(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians())
-                                + measuredSpeeds.vyMetersPerSecond
-                                    * Math.sin(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians());
-
-                        double vy_prime =
-                            -measuredSpeeds.vxMetersPerSecond
-                                    * Math.sin(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians())
-                                + measuredSpeeds.vyMetersPerSecond
-                                    * Math.cos(
-                                        RobotState.getReefAlignData()
-                                            .algaeSetpoint()
-                                            .getRotation()
-                                            .getRadians());
-
                         InternalLoggedTracer.record(
                             "Create Rotated Errors",
                             "Command Scheduler/Drive Commands/Auto Align Algae");
@@ -673,7 +609,7 @@ public final class DriveCommands {
                               "Create XSpeed", "Command Scheduler/Drive Commands/Auto Align Algae");
                         } else {
                           InternalLoggedTracer.reset();
-                          alignXController.reset(ex_prime, vx_prime);
+                          alignXController.reset(ex_prime);
                           InternalLoggedTracer.record(
                               "Reset XSpeed", "Command Scheduler/Drive Commands/Auto Align Algae");
                         }
@@ -685,7 +621,7 @@ public final class DriveCommands {
 
                         } else {
                           InternalLoggedTracer.reset();
-                          alignYController.reset(ey_prime, vy_prime);
+                          alignYController.reset(ey_prime);
                           InternalLoggedTracer.record(
                               "Reset YSpeed", "Command Scheduler/Drive Commands/Auto Align Algae");
                         }
@@ -725,13 +661,12 @@ public final class DriveCommands {
 
                         InternalLoggedTracer.reset();
                         speeds =
-                            ChassisSpeeds.fromFieldRelativeSpeeds(
-                                -adjustedXSpeed,
-                                -adjustedYSpeed,
-                                reefThetaSpeedCalculate(),
-                                RobotState.getRobotPoseReef()
-                                    .getRotation()
-                                    .plus(new Rotation2d(Math.PI)));
+                            new ChassisSpeeds(
+                                    -adjustedXSpeed, -adjustedYSpeed, reefThetaSpeedCalculate())
+                                .toRobotRelative(
+                                    RobotState.getRobotPoseReef()
+                                        .getRotation()
+                                        .plus(new Rotation2d(Math.PI)));
                         InternalLoggedTracer.record(
                             "Update Populated Speeds",
                             "Command Scheduler/Drive Commands/Auto Align Algae");
@@ -744,9 +679,9 @@ public final class DriveCommands {
                       }
 
                       InternalLoggedTracer.reset();
-                      Logger.recordOutput("Drive/Algae/xSpeed", -speeds.vxMetersPerSecond);
-                      Logger.recordOutput("Drive/Algae/ySpeed", -speeds.vyMetersPerSecond);
-                      Logger.recordOutput("Drive/Algae/thetaSpeed", speeds.omegaRadiansPerSecond);
+                      Logger.recordOutput("Drive/Algae/xSpeed", -speeds.vx);
+                      Logger.recordOutput("Drive/Algae/ySpeed", -speeds.vy);
+                      Logger.recordOutput("Drive/Algae/thetaSpeed", speeds.omega);
                       InternalLoggedTracer.record(
                           "Logging", "Command Scheduler/Drive Commands/Auto Align Algae");
 

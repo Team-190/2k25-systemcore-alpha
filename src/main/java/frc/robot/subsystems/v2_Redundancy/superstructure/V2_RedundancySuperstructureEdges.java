@@ -99,15 +99,11 @@ public class V2_RedundancySuperstructureEdges {
 
     // Special case: If coming from INTAKE_FLOOR, run outtake for 1s then stop
     if (from == V2_RedundancySuperstructureStates.INTAKE_FLOOR) {
-      return Commands.parallel(
-          pose.asCommand(elevator, funnel, intake, manipulator),
-          Commands.run(() -> intake.setRollerGoal(IntakeRollerState.OUTTAKE))
-              .withTimeout(0.75)
-              .andThen(Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.STOP)))
-              .unless(() -> RobotState.isHasAlgae()));
+      return Commands.parallel(pose.asCommand(elevator, funnel, intake, manipulator));
     }
 
-    // Special case: If going to INTAKE_REEF_L2 or INTAKE_REEF_L3, but not from STOW_UP or BARGE
+    // Special case: If going to INTAKE_REEF_L2 or INTAKE_REEF_L3, but not from
+    // STOW_UP or BARGE
     if ((to == V2_RedundancySuperstructureStates.INTAKE_REEF_L2
             || to == V2_RedundancySuperstructureStates.INTAKE_REEF_L3)
         && (from != V2_RedundancySuperstructureStates.STOW_UP
@@ -121,7 +117,8 @@ public class V2_RedundancySuperstructureEdges {
           pose.setManipulatorState(manipulator));
     }
 
-    // Special case: If going to FLOOR_ACQUISITION from any state EXCEPT INTAKE_FLOOR
+    // Special case: If going to FLOOR_ACQUISITION from any state EXCEPT
+    // INTAKE_FLOOR
     if (to == V2_RedundancySuperstructureStates.FLOOR_ACQUISITION)
       return pose.setIntakeState(intake)
           .andThen(
@@ -136,14 +133,35 @@ public class V2_RedundancySuperstructureEdges {
 
     // Special case: If going from FLOOR_ACQUISITION to STOW_DOWN,
     // or to STOW_UP
-    if ((from == V2_RedundancySuperstructureStates.FLOOR_ACQUISITION
-            && to == V2_RedundancySuperstructureStates.STOW_DOWN)
-        || to == V2_RedundancySuperstructureStates.STOW_UP) {
+    if ((to == V2_RedundancySuperstructureStates.STOW_UP)) {
+      if (from == V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ELEVATOR) {
+
+        return Commands.parallel(
+            pose.setManipulatorState(manipulator),
+            Commands.sequence(
+                Commands.waitUntil(() -> manipulator.getArmAngle().getRadians() > -1),
+                pose.setElevatorHeight(elevator)
+                    .alongWith(
+                        pose.setIntakeState(intake).alongWith(pose.setFunnelState(funnel)))));
+      }
 
       return pose.setManipulatorState(manipulator)
           .andThen(
               pose.setIntakeState(intake)
-                  .andThen(pose.setElevatorHeight(elevator), pose.setFunnelState(funnel)));
+                  .alongWith(pose.setElevatorHeight(elevator), pose.setFunnelState(funnel)));
+    }
+
+    if (from == V2_RedundancySuperstructureStates.FLOOR_ACQUISITION
+        && to == V2_RedundancySuperstructureStates.STOW_DOWN) {
+      return Commands.sequence(
+          Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.OUTTAKE))
+              .onlyIf(() -> !RobotState.isHasAlgae()),
+          pose.setManipulatorState(manipulator),
+          Commands.parallel(
+              Commands.wait(0.5)
+                  .andThen(Commands.runOnce(() -> intake.setRollerGoal(IntakeRollerState.STOP))),
+              pose.setIntakeState(intake)
+                  .alongWith(pose.setElevatorHeight(elevator), pose.setFunnelState(funnel))));
     }
 
     // Special case: If going to INTERMEDIATE_WAIT_FOR_ARM
@@ -162,7 +180,7 @@ public class V2_RedundancySuperstructureEdges {
     if (from == V2_RedundancySuperstructureStates.L1
         && to == V2_RedundancySuperstructureStates.SCORE_L1) {
       return Commands.runOnce(() -> manipulator.setRollerGoal(ManipulatorRollerState.L1_SCORE))
-          .andThen(Commands.wait(0.05), pose.asCommand(elevator, funnel, intake, manipulator));
+          .andThen(Commands.wait(0.1), pose.asCommand(elevator, funnel, intake, manipulator));
     }
 
     // Special case: If climbing, wait for elevator first
@@ -237,15 +255,20 @@ public class V2_RedundancySuperstructureEdges {
             V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM,
             V2_RedundancySuperstructureStates.L4_PLUS));
 
-    // Map each coral level to its scoring state and create bidirectional transitions (no algae)
+    // Map each coral level to its scoring state and create bidirectional
+    // transitions (no algae)
     Map<V2_RedundancySuperstructureStates, V2_RedundancySuperstructureStates> coralScoreMap =
         Map.of(
-            V2_RedundancySuperstructureStates.L1, V2_RedundancySuperstructureStates.SCORE_L1,
-            V2_RedundancySuperstructureStates.L2, V2_RedundancySuperstructureStates.SCORE_L2,
-            V2_RedundancySuperstructureStates.L3, V2_RedundancySuperstructureStates.SCORE_L3,
-            V2_RedundancySuperstructureStates.L4, V2_RedundancySuperstructureStates.SCORE_L4,
+            V2_RedundancySuperstructureStates.L1,
+            V2_RedundancySuperstructureStates.SCORE_L1,
+            V2_RedundancySuperstructureStates.L2,
+            V2_RedundancySuperstructureStates.SCORE_L2,
+            V2_RedundancySuperstructureStates.L3,
+            V2_RedundancySuperstructureStates.SCORE_L3,
+            V2_RedundancySuperstructureStates.L4,
+            V2_RedundancySuperstructureStates.SCORE_L4,
             V2_RedundancySuperstructureStates.L4_PLUS,
-                V2_RedundancySuperstructureStates.SCORE_L4_PLUS);
+            V2_RedundancySuperstructureStates.SCORE_L4_PLUS);
     coralScoreMap.forEach(
         (level, score) -> {
           NoAlgaeEdges.add(new Edge(score, level));
@@ -276,7 +299,8 @@ public class V2_RedundancySuperstructureEdges {
       }
     }
 
-    // Create bidirectional transitions between INTAKE_CORAL and STOW_DOWN (no algae)
+    // Create bidirectional transitions between INTAKE_CORAL and STOW_DOWN (no
+    // algae)
     NoAlgaeEdges.add(
         new Edge(
             V2_RedundancySuperstructureStates.STOW_DOWN,
@@ -286,7 +310,8 @@ public class V2_RedundancySuperstructureEdges {
             V2_RedundancySuperstructureStates.INTAKE_STATION,
             V2_RedundancySuperstructureStates.STOW_DOWN));
 
-    // Create one-way transitions from INTERMEDIATE_WAIT_FOR_ELEVATOR to multiple destinations
+    // Create one-way transitions from INTERMEDIATE_WAIT_FOR_ELEVATOR to multiple
+    // destinations
     List<V2_RedundancySuperstructureStates> iveDestinations =
         List.of(
             V2_RedundancySuperstructureStates.STOW_UP,
@@ -299,7 +324,8 @@ public class V2_RedundancySuperstructureEdges {
           new Edge(V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ELEVATOR, dest));
     }
 
-    // Create one-way transitions from INTERMEDIATE_WAIT_FOR_ARM to multiple destinations
+    // Create one-way transitions from INTERMEDIATE_WAIT_FOR_ARM to multiple
+    // destinations
     List<V2_RedundancySuperstructureStates> iwaDestinations =
         List.of(
             V2_RedundancySuperstructureStates.STOW_DOWN,
@@ -310,7 +336,8 @@ public class V2_RedundancySuperstructureEdges {
       NoAlgaeEdges.add(new Edge(V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM, dest));
     }
 
-    // Create bidirectional transitions between STOW_UP and multiple destinations (algae handling)
+    // Create bidirectional transitions between STOW_UP and multiple destinations
+    // (algae handling)
     List<V2_RedundancySuperstructureStates> stowUpDestinations =
         List.of(
             V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM,
@@ -321,7 +348,8 @@ public class V2_RedundancySuperstructureEdges {
       AlgaeEdges.add(new Edge(dest, V2_RedundancySuperstructureStates.STOW_UP));
     }
 
-    // Create one-way transitions from FLOOR_ACQUISITION to multiple destinations (no algae
+    // Create one-way transitions from FLOOR_ACQUISITION to multiple destinations
+    // (no algae
     // handling)
     List<V2_RedundancySuperstructureStates> floorAcqDest =
         List.of(
@@ -339,22 +367,22 @@ public class V2_RedundancySuperstructureEdges {
     Map<V2_RedundancySuperstructureStates, List<V2_RedundancySuperstructureStates>> reefMap =
         Map.of(
             V2_RedundancySuperstructureStates.REEF_ACQUISITION_L2,
-                List.of(
-                    V2_RedundancySuperstructureStates.INTAKE_REEF_L2, // no alg
-                    V2_RedundancySuperstructureStates.DROP_REEF_L2, // no alg
-                    V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM, // none
-                    V2_RedundancySuperstructureStates.REEF_ACQUISITION_L3, // none
-                    V2_RedundancySuperstructureStates.BARGE, // alg
-                    V2_RedundancySuperstructureStates.PROCESSOR, // alg
-                    V2_RedundancySuperstructureStates.STOW_UP), // alg
+            List.of(
+                V2_RedundancySuperstructureStates.INTAKE_REEF_L2, // no alg
+                V2_RedundancySuperstructureStates.DROP_REEF_L2, // no alg
+                V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM, // none
+                V2_RedundancySuperstructureStates.REEF_ACQUISITION_L3, // none
+                V2_RedundancySuperstructureStates.BARGE, // alg
+                V2_RedundancySuperstructureStates.PROCESSOR, // alg
+                V2_RedundancySuperstructureStates.STOW_UP), // alg
             V2_RedundancySuperstructureStates.REEF_ACQUISITION_L3,
-                List.of(
-                    V2_RedundancySuperstructureStates.INTAKE_REEF_L3,
-                    V2_RedundancySuperstructureStates.DROP_REEF_L3,
-                    V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM,
-                    V2_RedundancySuperstructureStates.BARGE,
-                    V2_RedundancySuperstructureStates.PROCESSOR,
-                    V2_RedundancySuperstructureStates.STOW_UP));
+            List.of(
+                V2_RedundancySuperstructureStates.INTAKE_REEF_L3,
+                V2_RedundancySuperstructureStates.DROP_REEF_L3,
+                V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM,
+                V2_RedundancySuperstructureStates.BARGE,
+                V2_RedundancySuperstructureStates.PROCESSOR,
+                V2_RedundancySuperstructureStates.STOW_UP));
     reefMap.forEach(
         (from, targets) -> {
           for (V2_RedundancySuperstructureStates to : targets) {
