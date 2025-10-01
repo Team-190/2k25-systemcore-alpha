@@ -442,15 +442,6 @@ public class V2_RedundancyRobotContainer implements RobotContainer {
 
   @Override
   public Command getAutonomousCommand() {
-    return Commands.sequence(
-        superstructure.runGoal(V2_RedundancySuperstructureStates.BARGE),
-        Commands.wait(2.0),
-        superstructure.runGoal(V2_RedundancySuperstructureStates.SCORE_BARGE),
-        Commands.wait(2.0),
-        superstructure.runGoal(V2_RedundancySuperstructureStates.BARGE),
-        Commands.wait(2.0),
-        superstructure.runGoal(V2_RedundancySuperstructureStates.INTERMEDIATE_WAIT_FOR_ARM),
-        Commands.wait(2.0),
-        superstructure.runGoal(V2_RedundancySuperstructureStates.STOW_DOWN));
+    return autoChooser.selectedCommand();
   }
 }
