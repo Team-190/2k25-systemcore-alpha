@@ -154,6 +154,10 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     for (TalonFX follower : followTalonFX) {
       follower.optimizeBusUtilization();
     }
+    talonFX.setPosition(0.0);
+    for (TalonFX follower : followTalonFX) {
+      follower.setPosition(0.0);
+    }
 
     positionVoltageRequest = new MotionMagicVoltage(0.0);
     voltageRequest = new VoltageOut(0.0);
@@ -223,19 +227,19 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     if (meters != 0.0) {
       talonFX.setControl(
           positionVoltageRequest
+              .withSlot(0)
               .withPosition(
                   meters
                       / (2 * Math.PI * ElevatorConstants.DRUM_RADIUS)
-                      * ElevatorConstants.ELEVATOR_GEAR_RATIO)
-              .withSlot(0));
+                      * ElevatorConstants.ELEVATOR_GEAR_RATIO));
     } else {
       talonFX.setControl(
           positionVoltageRequest
+              .withSlot(1)
               .withPosition(
                   meters
                       / (2 * Math.PI * ElevatorConstants.DRUM_RADIUS)
-                      * ElevatorConstants.ELEVATOR_GEAR_RATIO)
-              .withSlot(1));
+                      * ElevatorConstants.ELEVATOR_GEAR_RATIO));
     }
     InternalLoggedTracer.record("Set Position Goal", "Elevator/TalonFX");
   }

@@ -301,6 +301,7 @@ public class Elevator {
     public void periodic() {
       ExternalLoggedTracer.reset();
       Elevator.this.periodic();
+      System.out.println(Elevator.this.inputs.positionMeters);
       ExternalLoggedTracer.record("Elevator Total", "Elevator/Periodic");
     }
 
