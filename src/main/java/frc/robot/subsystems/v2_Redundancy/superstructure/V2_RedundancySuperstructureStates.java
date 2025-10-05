@@ -139,7 +139,8 @@ public enum V2_RedundancySuperstructureStates {
           FunnelState.OPENED,
           IntakeExtensionState.INTAKE,
           ManipulatorArmState.FLOOR_INTAKE),
-      SubsystemActions.empty()),
+      new SubsystemActions(
+          FunnelRollerState.STOP, IntakeRollerState.INTAKE, ManipulatorRollerState.STOP)),
   INTAKE_FLOOR(
       "INTAKE FLOOR",
       new SubsystemPoses(

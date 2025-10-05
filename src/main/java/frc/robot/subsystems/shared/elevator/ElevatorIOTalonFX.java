@@ -154,10 +154,6 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     for (TalonFX follower : followTalonFX) {
       follower.optimizeBusUtilization();
     }
-    talonFX.setPosition(0.0);
-    for (TalonFX follower : followTalonFX) {
-      follower.setPosition(0.0);
-    }
 
     positionVoltageRequest = new MotionMagicVoltage(0.0);
     voltageRequest = new VoltageOut(0.0);
